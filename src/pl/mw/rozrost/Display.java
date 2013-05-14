@@ -12,22 +12,24 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.JMenuBar;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JCheckBoxMenuItem;
 
 
 public class Display extends JFrame {
@@ -38,6 +40,11 @@ public class Display extends JFrame {
 	private String[] pedzle = new String[] {"Moore", "von Nauman", "Hexagonal left", "Hexagonal right", "Hexagonal random", "Pentagonal left", "Pentagonal right", "Pentagonal top", "Pentagonal bottom", "Pentagonal random"};
 	private JCheckBoxMenuItem chckbxmntmPamitajRozmieszczenieZiaren;
 	private JCheckBoxMenuItem chckbxmntmCzyPlanszePrzed;
+	private JRadioButtonMenuItem rdbtnmntmRwnomierne;
+	private JRadioButtonMenuItem rdbtnmntmLosowepromieKoa;
+	private JRadioButtonMenuItem rdbtnmntmLosowePrzypadkowe;
+	private ButtonGroup roz_zarodkow;
+	private ButtonGroup bg_periodycznosc;
 	
 	public Display() {
 		System.out.println("Display::Display();");
@@ -81,6 +88,73 @@ public class Display extends JFrame {
 		mnPlik.add(chckbxmntmCzyPlanszePrzed);
 		mnPlik.add(chckbxmntmPamitajRozmieszczenieZiaren);
 		mnPlik.add(mntmZamknij);
+		
+		JMenu mnRozmieszczenieZarodkw = new JMenu("Rozmieszczenie zarodków");
+		menuBar.add(mnRozmieszczenieZarodkw);
+		
+		rdbtnmntmRwnomierne = new JRadioButtonMenuItem("Równomierne");
+		rdbtnmntmRwnomierne.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				Core.Config.rozmieszczenie = 1;
+			}
+		});
+		mnRozmieszczenieZarodkw.add(rdbtnmntmRwnomierne);
+		
+		rdbtnmntmLosowepromieKoa = new JRadioButtonMenuItem("Losowe (promień koła)");
+		rdbtnmntmLosowepromieKoa.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				Core.Config.rozmieszczenie = 2;
+			}
+		});
+		rdbtnmntmLosowepromieKoa.setSelected(true);
+		mnRozmieszczenieZarodkw.add(rdbtnmntmLosowepromieKoa);
+		
+		rdbtnmntmLosowePrzypadkowe = new JRadioButtonMenuItem("Losowe przypadkowe");
+		rdbtnmntmLosowePrzypadkowe.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				Core.Config.rozmieszczenie = 3;
+			}
+		});
+		mnRozmieszczenieZarodkw.add(rdbtnmntmLosowePrzypadkowe);
+		
+		
+		roz_zarodkow = new ButtonGroup();
+		roz_zarodkow.add(rdbtnmntmRwnomierne);
+		roz_zarodkow.add(rdbtnmntmLosowepromieKoa);
+		roz_zarodkow.add(rdbtnmntmLosowePrzypadkowe);
+		
+		//===========================
+		JMenu mnPeriodyczno = new JMenu("Periodyczność");
+		menuBar.add(mnPeriodyczno);
+		
+		JRadioButtonMenuItem rdbtnmntmTak = new JRadioButtonMenuItem("Tak");
+		rdbtnmntmTak.setSelected(true);
+		rdbtnmntmTak.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Core.Config.bc = 0;
+			}
+		});
+		mnPeriodyczno.add(rdbtnmntmTak);
+		
+		JRadioButtonMenuItem rdbtnmntmNie = new JRadioButtonMenuItem("Nie");
+		rdbtnmntmNie.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Core.Config.bc=1;
+			}
+		});
+		mnPeriodyczno.add(rdbtnmntmNie);
+
+
+		bg_periodycznosc = new ButtonGroup();
+		bg_periodycznosc.add(rdbtnmntmTak);
+		bg_periodycznosc.add(rdbtnmntmNie);
+		
+		//================================================
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -99,23 +173,6 @@ public class Display extends JFrame {
 				System.out.println("keyReleased: "+e.getKeyCode()+", ts="+e.getWhen());
 			}
 		});
-		
-			// =================================	pasek	================================
-		
-		JLabel lblWarunkiBrzegowe = new JLabel("Periodyczno\u015B\u0107: ");
-		panel.add(lblWarunkiBrzegowe);
-
-		final JComboBox comboBox = new JComboBox();
-		comboBox.setToolTipText("Warunki Brzegowe");
-		comboBox.addItemListener(new ItemListener() {
-			public void itemStateChanged(ItemEvent arg0) {
-				Core.Config.bc = comboBox.getSelectedIndex();
-				//System.out.println("Wybrano bc: "+Core.Config.bc);
-			}
-		});
-		comboBox.setBackground(new Color(255, 255, 255));
-		comboBox.setModel(new DefaultComboBoxModel(new String[] {"TAK", "NIE"}));
-		panel.add(comboBox);
 		
 		JLabel lblPdzel = new JLabel("Sąsiedztwo:");
 		panel.add(lblPdzel);

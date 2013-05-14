@@ -7,6 +7,7 @@ public class Config {
 
 	public int sasiedztwo = 0;
 	public int punkty = 8;
+	public int rozmieszczenie = 2;
 	
 	public int pixelSize = 5;
 	

@@ -229,12 +229,11 @@ public class Plansza extends JPanel implements Runnable {
 		int y = r.nextInt(this.height);
 		this.clickPixel(x, y);
 	}
-	
+
 	private void clickPixel(int x, int y) {
 		int pixel_x = x / this.pixelSize;
 		int pixel_y = y / this.pixelSize;
-		//int tmp_s = 0;
-
+		// int tmp_s = 0;
 
 		while (pixel_x < 1)
 			pixel_x++;
@@ -247,8 +246,8 @@ public class Plansza extends JPanel implements Runnable {
 
 		if (pixel_x >= this.tabSizeX || pixel_y >= this.tabSizeY)
 			return;
-		
-		if (this.P[pixel_x][pixel_y].act==0) {
+
+		if (this.P[pixel_x][pixel_y].act == 0) {
 			this.P[pixel_x][pixel_y] = new P();
 			this.P[pixel_x][pixel_y].set_random(1);
 		}
@@ -269,29 +268,62 @@ public class Plansza extends JPanel implements Runnable {
 		int x, y;
 		int srodek_x = this.tabSizeX / 2;
 		int srodek_y = this.tabSizeY / 2;
-		int PRx,PRy;
 
-		for (int i = 0; i < 360; i = i + (360 / Core.Config.punkty)) {
-			PRx = r.nextInt(this.tabSizeX / 2);
-			PRy = r.nextInt(this.tabSizeY / 2);
+		switch (Core.Config.rozmieszczenie) {
+		case 1: // losowe rownomierne
+			double px,py;
+			
+			py = Math.sqrt(this.tabSizeY*Core.Config.punkty/this.tabSizeX);
+			px = ((double)Core.Config.punkty)/py;
+			int x_size = (int)px;
+			int y_size = (int)py;
+			int x_width = this.tabSizeX/x_size;
+			int y_height = this.tabSizeY/y_size;
+			srodek_x = x_size / 2;
+			srodek_y = y_size / 2;
 
-			x = (int) (PRx * Math.cos(i * Math.PI / 180));
-			x = x + srodek_x;
-			y = (int) (PRy * Math.sin(i * Math.PI / 180));
-			y = y + srodek_y;
+			//System.out.println("x_size= "+x_size+"; y_size = "+y_size);
+			for (int i=0;i<x_size;i++) {
+				for(int j=0;j<y_size;j++) {
+					this.P[(i*2+1)*x_width/2][(j*2+1)*y_height/2].set_random(1);
+				}
+			}
+			
+			break;// 1
+		case 2: // losowe promien okregu
+			int PRx,PRy;
 
-			while (x < 0)
-				x++;
-			while (y < 0)
-				y++;
-			while (x >= this.tabSizeX)
-				x--;
-			while (y >= this.tabSizeY)
-				y--;
+			for (int i = 0; i < 360; i = i + (360 / Core.Config.punkty)) {
+				PRx = r.nextInt(this.tabSizeX / 2);
+				PRy = r.nextInt(this.tabSizeY / 2);
 
-			this.P[x][y].set_random(1);
+				x = (int) (PRx * Math.cos(i * Math.PI / 180));
+				x = x + srodek_x;
+				y = (int) (PRy * Math.sin(i * Math.PI / 180));
+				y = y + srodek_y;
+
+				while (x < 0)
+					x++;
+				while (y < 0)
+					y++;
+				while (x >= this.tabSizeX)
+					x--;
+				while (y >= this.tabSizeY)
+					y--;
+
+				this.P[x][y].set_random(1);
+			}// for
+			break; // 2
+
+		case 3: // losowe przypadkowe
+			for (int i=0;i<Core.Config.punkty;i++) {
+				x = r.nextInt(this.tabSizeX);
+				y = r.nextInt(this.tabSizeY);
+				this.P[x][y].set_random(1);
+			}
+			break;// 3
 		}
-	}
+	}// --
 
 	private void reverse() {
 		for (int i = 0; i < this.tabSizeX; i++) {
@@ -320,11 +352,10 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}// g
 
-
 	public void loadMap() {
 		// TODO Auto-generated method stub
 		for (Entry<Pkt, P> o : Core.pkts.entrySet()) {
-			
+
 			this.P[o.getKey().x][o.getKey().y] = o.getValue().clone();
 		}
 	}
@@ -332,10 +363,10 @@ public class Plansza extends JPanel implements Runnable {
 	public void saveMap() {
 		// TODO Auto-generated method stub
 		Core.pkts.clear();
-		for (int i=0;i<tabSizeX;i++) {
-			for (int j=0;j<tabSizeY;j++) {
-				if (this.P[i][j].act==1) {
-					Core.pkts.put(new Pkt(i,j), this.P[i][j].clone());
+		for (int i = 0; i < tabSizeX; i++) {
+			for (int j = 0; j < tabSizeY; j++) {
+				if (this.P[i][j].act == 1) {
+					Core.pkts.put(new Pkt(i, j), this.P[i][j].clone());
 				}
 			}
 		}
