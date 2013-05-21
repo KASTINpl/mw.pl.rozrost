@@ -21,6 +21,9 @@ public class Plansza extends JPanel implements Runnable {
 	private int tabSizeX = this.width / this.pixelSize;
 	private int tabSizeY = this.height / this.pixelSize;
 	private P[][] P = new P[this.tabSizeX][this.tabSizeY];
+	private double p_before = 0.0;
+	
+	private int itr = 0; // aktualny krok iteracji
 
 	public Plansza() {
 
@@ -51,85 +54,197 @@ public class Plansza extends JPanel implements Runnable {
 		while (true) {
 			if (Core.Config.StatusStart == 1) {
 				this.reverse(); // P: prev = act
+				this.resizeP(); // rozmiar planszy
 				this.refresh();
 				// System.out.print(".");
-			}
+			} else { itr = 0; }
 			try {
-				Thread.sleep(Core.Config.delay);
-			} catch (Exception ex) {
-			}
+				Thread.sleep(Core.Config.delay_i);
+			} catch (Exception ex) { }
 		}
 	}
 
 	public void refresh() {
-		int w = this.width;
-		int h = this.height;
-
-		if (this.getHeight() > 0)
-			h = this.getHeight();
-		if (this.getWidth() > 0)
-			w = this.getWidth();
-
-		this.tabSizeX = this.width / this.pixelSize;
-		this.tabSizeY = this.height / this.pixelSize;
-
-		if (h != this.height || w != this.width) { // zmiana rozmiary planszy -
-													// przebuduj tab
-			System.out.print("Zmieniam rozmiar planszy z: " + this.tabSizeX
-					+ " x " + this.tabSizeY + ";"); // --------
-
-			P[][] P_new = new P[w / this.pixelSize][h / this.pixelSize];
-			for (int i = 0; i < w / this.pixelSize; i++) {
-				for (int j = 0; j < h / this.pixelSize; j++) {
-					P_new[i][j] = new P();
-				}
-			}
-			// foreach old array
-			for (int i = 0; i < this.tabSizeX; i++) {
-				for (int j = 0; j < this.tabSizeY; j++) {
-					if (i >= (w / this.pixelSize) || j >= (h / this.pixelSize))
-						continue;
-					P_new[i][j] = this.P[i][j];
-				}
-			}
-
-			// set new size
-			this.width = w;
-			this.height = h;
-			this.tabSizeX = this.width / this.pixelSize;
-			this.tabSizeY = this.height / this.pixelSize;
-
-			System.out.print("na: " + this.tabSizeX + " x " + this.tabSizeY
-					+ "; \n"); // -------------------------
-			// odswiez tab
-			this.P = P_new;
-		}
-
+		int x = 0; // ile pixeli zostalo do zapelnienia planszy ziarnami
 		// ===== iteracja =========
+		switch (Core.Config.metoda) {
+		case 0:
+			x = this.iteracja_naiwny();
+			break;
+		case 1: 
+//			this.iteracja_rekrystqalizacja();
+//			nie zaimplementowane :p
+			break;
+		}
+		
+		if (x==0 && Core.Config.rekrystalizacja==1) { // mozna rekrystalizowac
+			++itr;
+			this.rekrystqalizacja(itr);
+		}
+		// ===== rysuj =========
+		repaint();
+	}//--
+	
+	private void rekrystqalizacja(int itr) {
+		double p = this.gestosc_dyslokacji(itr) - p_before;  // roznica dyslokacji
+		double psr = p/(double)this.tabSizeX*this.tabSizeY;  // dyslokacje na komorke
+		double p_krytyczne = 4215840142323.42/this.tabSizeX*this.tabSizeY;
+		double p_tmp,p_all=0.0;
 		P tmp;
+		
+		/* rozmiesz gestosc dyslokacji */
+		
+		for (int i = 0; i <= this.tabSizeX - 1; i++) {
+			for (int j = 0; j <= this.tabSizeY - 1; j++) {
+				if (p_all>=psr) continue;
+				
+				if (this.naGranicy(i, j)) {
+					p_tmp = this.pij(70, 180, psr);
+				} else {
+					p_tmp = this.pij(0, 30, psr);
+				}
+				p_all += p_tmp;
+				
+				this.P[i][j].p += p_tmp;
+				
+				if (this.P[i][j].p > p_krytyczne) { // nowe ziarno [nz]
+					this.P[i][j].set_rek(1);
+				}//nz
+			}//j
+		}//i
+		p_before += p_all; // jesli przydzielono za malo dyslokacji, dodaj brakujace do kolejnego kroku
+		
+		/* rozrost istniejacych zrekrystalizowanych ziaren  */
+		for (int i = 0; i <= this.tabSizeX - 1; i++) {
+			for (int j = 0; j <= this.tabSizeY - 1; j++) {
+				if (this.P[i][j].act==0 || this.P[i][j].rek==1) continue; // brak ziarna lub komorka zrekrystalizowana
 
-		if (Core.Config.StatusStart == 1) { // run
+				tmp = this.makeAct(i, j, "rek"); // wzoz sasiada od ktorego mam  przejac kolor
+				
+				if (tmp.rek < 0 && tmp.rek_prev < 0)
+					continue;
+
+				this.P[i][j].rek = tmp.rek;
+				this.P[i][j].recolor(tmp);
+				
+				if (tmp.rek<1) {
+					/*if (ziarno) {
+						
+					} else {
+						this.P[i][j].p += this.pij(0, 30, psr);
+					}*/
+				} else { /* no to problem... */ }
+				
+			}//f[j
+		}//f[i
+	}//---------------------------
+	
+	private void iteracja_rekrystqalizacja() {
+		double p = this.gestosc_dyslokacji(this.itr);
+		double psr = p/(double)this.tabSizeX*this.tabSizeY;
+
+		for (int i = 0; i <= this.tabSizeX - 1; i++) {
+			for (int j = 0; j <= this.tabSizeY - 1; j++) {
+				if (this.P[i][j].prev==0) {
+					this.P[i][j].p += this.pij(70, 120, psr);
+				} else if (this.P[i][j].prev==1) {
+					/*if (ziarno) {
+						
+					} else {
+						this.P[i][j].p += this.pij(0, 30, psr);
+					}*/
+				} else { /* no to problem... */ }
+				
+			}//f[j
+		}//f[i
+	}//---------------------------
+	
+	private Double gestosc_dyslokacji(int itr) {
+		Double r;
+		
+		double A = 86710969050178.5;
+		double B = 9.41268203527779;
+		double t = (double)itr * (double)(Core.Config.delay)/1000.0;
+		
+		r = A/B*(1-A/B)*Math.exp(-B*t);
+		
+		return r;
+	}
+	
+	private double pij(int l1, int l2, double psr) {
+		Random r = new Random();
+		return (r.nextInt(l2-l1)+l1)*psr;
+	}
+	
+	/*rozrost naiwny*/
+	
+	private int iteracja_naiwny() {
+		if (Core.Config.StatusStart == 0) return -1;
+		int x = 0;
+		P tmp;
+		
 			for (int i = 0; i <= this.tabSizeX - 1; i++) {
 				for (int j = 0; j <= this.tabSizeY - 1; j++) {
 					if (this.P[i][j].act == 1)
 						continue;
-					tmp = this.makeAct(i, j); // wzr�� s�siada od ktorego mam
+					++x;
+					tmp = this.makeAct(i, j, "act"); // wzroz sasiada od ktorego mam
 												// przejac kolor
 					if (tmp.act < 0 && tmp.prev < 0)
 						continue;
 					this.P[i][j].act = tmp.act;
-					this.P[i][j].R = tmp.R;
-					this.P[i][j].G = tmp.G;
-					this.P[i][j].B = tmp.B;
-				}
-			}
-		} // run
+					this.P[i][j].recolor(tmp);
+				}//j
+			}//i
+		return x;
+	}//--
 
-		// ===== rysuj =========
-		repaint();
+	private boolean naGranicy(int x, int y) {
+		int[] s = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+		int left_x = x - 1;
+		int right_x = x + 1;
+		int top_y = y - 1;
+		int bottom_y = y + 1;
+
+		if (Core.Config.bc == 0) { // periodycznosc
+			if (left_x < 0)
+				left_x = this.tabSizeX - 1;
+			if (right_x > this.tabSizeX - 1)
+				right_x = 0;
+
+			if (top_y < 0)
+				top_y = this.tabSizeY - 1;
+			else if (bottom_y > this.tabSizeY - 1)
+				bottom_y = 0;
+		}
+
+		if (left_x >= 0 && top_y >= 0)
+			s[0] = this.P[left_x][top_y].prev;
+		if (top_y >= 0)
+			s[1] = this.P[x][top_y].prev;
+		if (top_y >= 0 && right_x <= this.tabSizeX - 1)
+			s[2] = this.P[right_x][top_y].prev;
+		if (right_x <= this.tabSizeX - 1)
+			s[3] = this.P[right_x][y].prev;
+		if (bottom_y <= this.tabSizeY - 1 && right_x <= this.tabSizeX - 1)
+			s[4] = this.P[right_x][bottom_y].prev;
+		if (bottom_y <= this.tabSizeY - 1)
+			s[5] = this.P[x][bottom_y].prev;
+		if (left_x >= 0 && bottom_y <= this.tabSizeY - 1)
+			s[6] = this.P[left_x][bottom_y].prev;
+		if (left_x >= 0)
+			s[7] = this.P[left_x][y].prev;
+		
+			
+		for(int ss : s) {
+			if (ss!=P[x][y].act) return true;
+		}
+		return false;
+
 	}
-
-	private P makeAct(int x, int y) {
+	
+	private P makeAct(int x, int y, String t) {
 		int[] s = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		int[] s_pattern = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		Map<Integer, int[]> pattern = new HashMap<Integer, int[]>();
@@ -169,6 +284,7 @@ public class Plansza extends JPanel implements Runnable {
 				bottom_y = 0;
 		}
 
+		if (t=="act") {
 		// uzupe�nij tabele sasiad�w
 		if (left_x >= 0 && top_y >= 0)
 			s[0] = this.P[left_x][top_y].prev;
@@ -186,7 +302,25 @@ public class Plansza extends JPanel implements Runnable {
 			s[6] = this.P[left_x][bottom_y].prev;
 		if (left_x >= 0)
 			s[7] = this.P[left_x][y].prev;
-
+		} else if (t=="rek") {
+			if (left_x >= 0 && top_y >= 0)
+				s[0] = this.P[left_x][top_y].rek_prev;
+			if (top_y >= 0)
+				s[1] = this.P[x][top_y].rek_prev;
+			if (top_y >= 0 && right_x <= this.tabSizeX - 1)
+				s[2] = this.P[right_x][top_y].rek_prev;
+			if (right_x <= this.tabSizeX - 1)
+				s[3] = this.P[right_x][y].rek_prev;
+			if (bottom_y <= this.tabSizeY - 1 && right_x <= this.tabSizeX - 1)
+				s[4] = this.P[right_x][bottom_y].rek_prev;
+			if (bottom_y <= this.tabSizeY - 1)
+				s[5] = this.P[x][bottom_y].rek_prev;
+			if (left_x >= 0 && bottom_y <= this.tabSizeY - 1)
+				s[6] = this.P[left_x][bottom_y].rek_prev;
+			if (left_x >= 0)
+				s[7] = this.P[left_x][y].rek_prev;
+		}
+		
 		P newP = new P();
 		newP.set(-1);
 
@@ -369,6 +503,54 @@ public class Plansza extends JPanel implements Runnable {
 					Core.pkts.put(new Pkt(i, j), this.P[i][j].clone());
 				}
 			}
+		}
+	}
+
+	private void resizeP() {
+
+		int w = this.width;
+		int h = this.height;
+
+		if (this.getHeight() > 0)
+			h = this.getHeight();
+		if (this.getWidth() > 0)
+			w = this.getWidth();
+
+		this.tabSizeX = this.width / this.pixelSize;
+		this.tabSizeY = this.height / this.pixelSize;
+
+		if (h != this.height || w != this.width) { // zmiana rozmiary planszy -
+													// przebuduj tab
+			
+		
+		System.out.print("Zmieniam rozmiar planszy z: " + this.tabSizeX
+				+ " x " + this.tabSizeY + ";"); // --------
+
+		P[][] P_new = new P[w / this.pixelSize][h / this.pixelSize];
+		for (int i = 0; i < w / this.pixelSize; i++) {
+			for (int j = 0; j < h / this.pixelSize; j++) {
+				P_new[i][j] = new P();
+			}
+		}
+		// foreach old array
+		for (int i = 0; i < this.tabSizeX; i++) {
+			for (int j = 0; j < this.tabSizeY; j++) {
+				if (i >= (w / this.pixelSize) || j >= (h / this.pixelSize))
+					continue;
+				P_new[i][j] = this.P[i][j];
+			}
+		}
+
+		// set new size
+		this.width = w;
+		this.height = h;
+		this.tabSizeX = this.width / this.pixelSize;
+		this.tabSizeY = this.height / this.pixelSize;
+
+		System.out.print("na: " + this.tabSizeX + " x " + this.tabSizeY
+				+ "; \n"); // -------------------------
+		// odswiez tab
+		this.P = P_new;
 		}
 	}
 }

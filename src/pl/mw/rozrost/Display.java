@@ -45,7 +45,9 @@ public class Display extends JFrame {
 	private JRadioButtonMenuItem rdbtnmntmLosowePrzypadkowe;
 	private ButtonGroup roz_zarodkow;
 	private ButtonGroup bg_periodycznosc;
+	private JSpinner spinner_1;
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Display() {
 		System.out.println("Display::Display();");
 		setForeground(UIManager.getColor("Button.highlight"));
@@ -154,6 +156,35 @@ public class Display extends JFrame {
 		bg_periodycznosc.add(rdbtnmntmTak);
 		bg_periodycznosc.add(rdbtnmntmNie);
 		
+		JMenu mnMetodaRozrostu = new JMenu("Metoda rozrostu ziaren");
+		menuBar.add(mnMetodaRozrostu);
+		
+		JRadioButtonMenuItem rdbtnmntmNaiwnyRozrostZiaren = new JRadioButtonMenuItem("Naiwny rozrost ziaren");
+		rdbtnmntmNaiwnyRozrostZiaren.setSelected(true);
+		rdbtnmntmNaiwnyRozrostZiaren.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent arg0) {
+				Core.Config.metoda = 0;
+			}
+		});
+		mnMetodaRozrostu.add(rdbtnmntmNaiwnyRozrostZiaren);
+		
+		JRadioButtonMenuItem rdbtnmntmZarodkowanie = new JRadioButtonMenuItem("Zarodkowanie");
+		rdbtnmntmZarodkowanie.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Core.Config.metoda = 1;
+			}
+		});
+		rdbtnmntmZarodkowanie.setSelected(true);
+		mnMetodaRozrostu.add(rdbtnmntmZarodkowanie);
+		
+		ButtonGroup bg_metoda = new ButtonGroup();
+		bg_metoda.add(rdbtnmntmNaiwnyRozrostZiaren);
+		bg_metoda.add(rdbtnmntmZarodkowanie);
+
+		ButtonGroup rek_metoda = new ButtonGroup();
+		
 		//================================================
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -226,6 +257,9 @@ public class Display extends JFrame {
 			}
 		});
 		
+		JLabel label_1 = new JLabel(" ");
+		panel.add(label_1);
+		
 		JLabel lblIloZiaren = new JLabel("Ziarna:");
 		panel.add(lblIloZiaren);
 		
@@ -238,8 +272,26 @@ public class Display extends JFrame {
 		spinner.setModel(new SpinnerNumberModel(Core.Config.punkty, 1, 360, 1));
 		panel.add(spinner);
 		
-		JLabel label = new JLabel("    ");
+		JLabel label = new JLabel(" ");
 		panel.add(label);
+		
+		JLabel lblCzas = new JLabel("Czas");
+		panel.add(lblCzas);
+		
+		spinner_1 = new JSpinner();
+		spinner_1.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent arg0) {
+				Core.Config.delay = (Integer) spinner_1.getValue();
+			}
+		});
+		spinner_1.setModel(new SpinnerNumberModel(20, 1, 9999, 1));
+		panel.add(spinner_1);
+		
+		JLabel lblMs = new JLabel("ms");
+		panel.add(lblMs);
+		
+		JLabel label_2 = new JLabel(" ");
+		panel.add(label_2);
 		panel.add(btnGeneruj);
 		
 		JButton btnKoniec = new JButton("STOP");
@@ -261,17 +313,16 @@ public class Display extends JFrame {
 				Display.this.panel_1.refresh();
 			}
 		});
+		panel.add(btnReset);
 		
-		JButton btnNowyPkt = new JButton("NOWY PKT");
-		btnNowyPkt.addMouseListener(new MouseAdapter() {
+		JButton btnRekrystalizacja = new JButton("REKRYSTALIZACJA");
+		btnRekrystalizacja.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				Display.this.panel_1.randomPixel();
+			public void mouseClicked(MouseEvent e) {
+				Core.Config.rekrystalizacja = 1;
 			}
 		});
-		btnNowyPkt.setBackground(Color.CYAN);
-		panel.add(btnNowyPkt);
-		panel.add(btnReset);
+		panel.add(btnRekrystalizacja);
 	}
 
 }
