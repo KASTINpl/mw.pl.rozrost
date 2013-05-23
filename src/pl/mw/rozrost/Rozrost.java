@@ -2,6 +2,11 @@ package pl.mw.rozrost;
 
 import javax.swing.UIManager;
 
+/*
+ * Solution (main)
+ * 
+ * @see Display
+ */
 public class Rozrost {
 
 	/**

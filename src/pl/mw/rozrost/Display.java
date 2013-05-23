@@ -31,7 +31,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-
+/*
+ * GUI
+ */
 public class Display extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -47,7 +49,6 @@ public class Display extends JFrame {
 	private ButtonGroup bg_periodycznosc;
 	private JSpinner spinner_1;
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Display() {
 		System.out.println("Display::Display();");
 		setForeground(UIManager.getColor("Button.highlight"));
@@ -123,10 +124,21 @@ public class Display extends JFrame {
 		mnRozmieszczenieZarodkw.add(rdbtnmntmLosowePrzypadkowe);
 		
 		
+		
+		JRadioButtonMenuItem rdbtnmntmLosoweZPromieniem = new JRadioButtonMenuItem("Losowe z promieniem");
+		rdbtnmntmLosoweZPromieniem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Core.Config.rozmieszczenie = 4;
+			}
+		});
+		mnRozmieszczenieZarodkw.add(rdbtnmntmLosoweZPromieniem);
+
 		roz_zarodkow = new ButtonGroup();
 		roz_zarodkow.add(rdbtnmntmRwnomierne);
 		roz_zarodkow.add(rdbtnmntmLosowepromieKoa);
 		roz_zarodkow.add(rdbtnmntmLosowePrzypadkowe);
+		roz_zarodkow.add(rdbtnmntmLosoweZPromieniem);
 		
 		//===========================
 		JMenu mnPeriodyczno = new JMenu("Periodyczność");
@@ -156,7 +168,7 @@ public class Display extends JFrame {
 		bg_periodycznosc.add(rdbtnmntmTak);
 		bg_periodycznosc.add(rdbtnmntmNie);
 		
-		JMenu mnMetodaRozrostu = new JMenu("Metoda rozrostu ziaren");
+		/*JMenu mnMetodaRozrostu = new JMenu("Metoda rozrostu ziaren");
 		menuBar.add(mnMetodaRozrostu);
 		
 		JRadioButtonMenuItem rdbtnmntmNaiwnyRozrostZiaren = new JRadioButtonMenuItem("Naiwny rozrost ziaren");
@@ -182,8 +194,8 @@ public class Display extends JFrame {
 		ButtonGroup bg_metoda = new ButtonGroup();
 		bg_metoda.add(rdbtnmntmNaiwnyRozrostZiaren);
 		bg_metoda.add(rdbtnmntmZarodkowanie);
-
-		ButtonGroup rek_metoda = new ButtonGroup();
+*/
+		//ButtonGroup rek_metoda = new ButtonGroup();
 		
 		//================================================
 		contentPane = new JPanel();
