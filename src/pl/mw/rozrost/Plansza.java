@@ -132,8 +132,9 @@ public class Plansza extends JPanel implements Runnable {
 		Random r = new Random();
 		P wybrane_n = new P();
 		
-		for (int i = 0; i <= this.tabSizeX - 1; i++) {
-			for (int j = 0; j <= this.tabSizeY - 1; j++) {
+		for (int i = 0; i < this.tabSizeX; i++) {
+			for (int j = 0; j < this.tabSizeY; j++) {
+				//if ( this.naGranicy(i, j) ) continue; // nie biez pod uwage gotowych ziaren
 				wybrane.clear();
 				int E = this.countEnergy(i,j);
 				int E_new = -1;
@@ -143,8 +144,10 @@ public class Plansza extends JPanel implements Runnable {
 					} while(wybrane.contains(wybrane_n));
 					wybrane.add(wybrane_n);
 					
+					this.P[i][j].recolor(wybrane_n);
+
 					E_new = this.countEnergy(i,j);
-				} while (E_new>E);
+				} while (E_new>E && wybrane.size()<kolory.size());
 				
 			}//j
 		}//i
@@ -612,107 +615,6 @@ public class Plansza extends JPanel implements Runnable {
 		}
 		return e;
 	}
-	
-	/*
-	 * komórka dla której energia otoczenia jest najmniejsza
-	 * 
-	 * @param x,y - współrzędne obecnego punktu
-	 * @return P - komórka dla której energia jest najmniejsza
-	 */
-	private Integer minEnergyRGB(int x, int y) {
-		P[] s = new P[8];
-		int[] s_pattern = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-		/*
-		 * 0 - lewa g�rna; 1 - centralna g�rna; 2 - prawa g�rna; 3 - prawa
-		 * �rodkowa 4 - prawa dolna; 5 - centralna dolna; 6 - lewa dolna; 7 -
-		 * lewa �rodkowa
-		 */ 
-		int left_x = x - 1;
-		int right_x = x + 1;
-		int top_y = y - 1;
-		int bottom_y = y + 1;
-
-		if (Core.Config.bc == 0) { // periodyczno��
-			if (left_x < 0)
-				left_x = this.tabSizeX - 1;
-			if (right_x > this.tabSizeX - 1)
-				right_x = 0;
-
-			if (top_y < 0)
-				top_y = this.tabSizeY - 1;
-			else if (bottom_y > this.tabSizeY - 1)
-				bottom_y = 0;
-		}
-
-		// uzupe�nij tabele sasiad�w
-		if (left_x >= 0 && top_y >= 0)
-			s[0] = this.P[left_x][top_y];
-		if (top_y >= 0)
-			s[1] = this.P[x][top_y];
-		if (top_y >= 0 && right_x <= this.tabSizeX - 1)
-			s[2] = this.P[right_x][top_y];
-		if (right_x <= this.tabSizeX - 1)
-			s[3] = this.P[right_x][y];
-		if (bottom_y <= this.tabSizeY - 1 && right_x <= this.tabSizeX - 1)
-			s[4] = this.P[right_x][bottom_y];
-		if (bottom_y <= this.tabSizeY - 1)
-			s[5] = this.P[x][bottom_y];
-		if (left_x >= 0 && bottom_y <= this.tabSizeY - 1)
-			s[6] = this.P[left_x][bottom_y];
-		if (left_x >= 0)
-			s[7] = this.P[left_x][y];
-		
-
-		Random r = new Random();
-		switch (Core.Config.sasiedztwo) {
-		case 4:
-			s_pattern = pattern.get(r.nextInt(2) + 2);
-			break;
-		case 9:
-			s_pattern = pattern.get(r.nextInt(4) + 5);
-			break;
-		default:
-			s_pattern = pattern.get(Core.Config.sasiedztwo);
-			break;
-		}
-
-		// usun duplikaty (m) i je policz (hm)
-		List<P> m = new ArrayList<P>();
-		Map<Integer,Integer> hm = new HashMap<Integer,Integer>(); // RGB, count
-		int s_key=-1;
-		for (P v : s) { ++s_key; if (s_pattern[s_key]==0) continue; // biez pod uwage sasiedztwo
-			boolean in_m = false;
-			if (!m.isEmpty()) for (P m_tmp : m) {//m_tmp
-				if (m_tmp.colorMatch(v)) { in_m = true; break; }
-			}//m_tmp
-			
-			if (!in_m) {
-				m.add(v); hm.put(v.color2int(), 1);
-			} else {
-				Integer hm_tmp_c = hm.get(v.color2int());
-				++hm_tmp_c;
-				hm.remove(v.color2int());
-				hm.put(v.color2int(), hm_tmp_c);
-			}
-		}//v
-		
-
-		// wybierz RGB ktory najczesniej wystepuje
-		Iterator<Entry<Integer, Integer>> it = hm.entrySet().iterator();
-		Integer hm_e_max = 0;
-		Integer hm_e_max_key = 0;
-	    while (it.hasNext()) {//it
-	        Map.Entry<Integer, Integer> hm_tmp = it.next();
-	        if (hm_tmp.getValue()>hm_e_max) {
-	        	hm_e_max = hm_tmp.getValue();
-	        	hm_e_max_key = hm_tmp.getKey();
-	        }
-	    }//it
-
-	   return hm_e_max_key;
-
-	}//--
 	
 	/*
 	 * znajdz sasiada danego punktu
