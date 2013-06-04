@@ -627,7 +627,7 @@ public class Plansza extends JPanel implements Runnable {
 		 * 0 - lewa g�rna; 1 - centralna g�rna; 2 - prawa g�rna; 3 - prawa
 		 * �rodkowa 4 - prawa dolna; 5 - centralna dolna; 6 - lewa dolna; 7 -
 		 * lewa �rodkowa
-		 */
+		 */ 
 		int left_x = x - 1;
 		int right_x = x + 1;
 		int top_y = y - 1;
