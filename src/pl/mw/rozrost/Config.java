@@ -21,6 +21,8 @@ public class Config {
 	
 	public int rekrystalizacja = 0; // po rozroscie ziaren
 	
+	public int mc = 0; // Monte Carlo ;)
+	
 	public boolean menuSaveMap = false;
 	public boolean menuClean = true;
 }

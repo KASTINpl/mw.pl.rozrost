@@ -96,8 +96,25 @@ public class P {
 	}
 
 	public boolean colorMatch(P p) {
+		if (this.R==250 && this.G==250 && this.B==250) return false;
 		if (this.R == p.R && this.G == p.G && this.B == p.B)
 			return true;
 		return false;
+	}
+	public Integer color2int() {
+		int rgb = this.R;
+		rgb = (rgb << 8) + this.G;
+		rgb = (rgb << 8) + this.B;
+		return rgb;
+	}
+	public void loadRGB(Integer _rgb) {
+		int rgb = _rgb;
+		this.R = (rgb >> 16) & 0xFF;
+		this.G = (rgb >> 8) & 0xFF;
+		this.B = rgb & 0xFF;
+	}
+	
+	public boolean equals(P p) {
+	    return this.colorMatch(p);
 	}
 }

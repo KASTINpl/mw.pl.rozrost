@@ -56,7 +56,7 @@ public class Display extends JFrame {
 		setTitle("Modelowanie Wielkoskalowe - Rozrost ziaren");
 		
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 960, 600);
+		setBounds(100, 100, 1100, 700);
 		
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -134,11 +134,22 @@ public class Display extends JFrame {
 		});
 		mnRozmieszczenieZarodkw.add(rdbtnmntmLosoweZPromieniem);
 
+		
+		JRadioButtonMenuItem rdbtnmntmMonteCarlo = new JRadioButtonMenuItem("Monte Carlo");
+		rdbtnmntmMonteCarlo.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				Core.Config.rozmieszczenie = 5;
+			}
+		});
+		mnRozmieszczenieZarodkw.add(rdbtnmntmMonteCarlo);
+		
 		roz_zarodkow = new ButtonGroup();
 		roz_zarodkow.add(rdbtnmntmRwnomierne);
 		roz_zarodkow.add(rdbtnmntmLosowepromieKoa);
 		roz_zarodkow.add(rdbtnmntmLosowePrzypadkowe);
 		roz_zarodkow.add(rdbtnmntmLosoweZPromieniem);
+		roz_zarodkow.add(rdbtnmntmMonteCarlo);
 		
 		//===========================
 		JMenu mnPeriodyczno = new JMenu("Periodyczność");
@@ -335,6 +346,15 @@ public class Display extends JFrame {
 			}
 		});
 		panel.add(btnRekrystalizacja);
+		
+		JButton btnMc = new JButton("MC");
+		btnMc.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				Core.Config.mc = 1;
+			}
+		});
+		panel.add(btnMc);
 	}
 
 }
