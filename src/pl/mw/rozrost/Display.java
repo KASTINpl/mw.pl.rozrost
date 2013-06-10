@@ -342,7 +342,7 @@ public class Display extends JFrame {
 		btnRekrystalizacja.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				Core.Config.rekrystalizacja = 1;
+				Core.Config.rekrystalizacja = (Core.Config.rekrystalizacja==1)?0:1;
 			}
 		});
 		panel.add(btnRekrystalizacja);
@@ -351,7 +351,7 @@ public class Display extends JFrame {
 		btnMc.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				Core.Config.mc = 1;
+				Core.Config.mc = (Core.Config.mc==1)?0:1;
 			}
 		});
 		panel.add(btnMc);

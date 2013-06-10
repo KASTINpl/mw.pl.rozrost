@@ -29,9 +29,9 @@ public class Plansza extends JPanel implements Runnable {
 	
 	private int itr = 0; // aktualny krok iteracji
 	private Map<Integer, int[]> pattern;
-	private List<P> kolory;
+	private List<P> kolory = new ArrayList<P>();
 
-	/*
+	/**
 	 * inicjalizacja macierzy oraz planszy
 	 */
 	public Plansza() {
@@ -74,7 +74,7 @@ public class Plansza extends JPanel implements Runnable {
 
 	}
     
-	/*
+	/**
 	 * uruchomienie planszy w nowym watku, inicjalizacja iterakcji
 	 * 
 	 * @see java.lang.Runnable#run()
@@ -94,7 +94,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}
 
-	/*
+	/**
 	 * iterakcja programu
 	 */
 	public void refresh() {
@@ -115,7 +115,8 @@ public class Plansza extends JPanel implements Runnable {
 			this.rekrystqalizacja(itr);
 		}
 		
-		else if (x==0 && Core.Config.mc==1) { // mozna monte carlować
+		else if (Core.Config.mc==1) { // mozna monte carlować
+			if (itr<2) System.out.println("kolory.size() = "+kolory.size());
 			++itr;
 			this.mc(itr);
 		}
@@ -123,7 +124,7 @@ public class Plansza extends JPanel implements Runnable {
 		repaint();
 	}//--
 
-	/*
+	/**
 	 * iterakcja Monte Carlo
 	 */
 	private void mc(int itr) {
@@ -155,31 +156,37 @@ public class Plansza extends JPanel implements Runnable {
 		
 	}//---------------------------
 	
-	/*
+	/**
 	 * iterakcja rekrystalizacji - rozdziel gestosc dyslokacji + rozrost zrekrystalizowanych ziaren
 	 */
 	private void rekrystqalizacja(int itr) {
-		double p = this.gestosc_dyslokacji(itr) - p_before;  // roznica dyslokacji
+		double p = this.gestosc_dyslokacji(itr) - this.gestosc_dyslokacji(itr-1);  // roznica dyslokacji
 		//p_before += p;
 		double psr = p/(this.tabSizeX*this.tabSizeY);  // dyslokacje na komorke
 		double p_krytyczne = 4215840142323.42/(this.tabSizeX*this.tabSizeY);
-		double p_tmp,p_all=0.0;
+		double p_tmp,p_all=0.0,p_real=0.0;
 		P tmp;
+		int zrekr_ile = 0; //ile ziaren zrekrystalizowanych?
 		
-		/* rozmiesz gestosc dyslokacji */
+		/** rozmiesz gestosc dyslokacji */
 		
 		for (int i = 0; i <= this.tabSizeX - 1; i++) {
 			for (int j = 0; j <= this.tabSizeY - 1; j++) {
 				//if (p_all>=p) continue;
 				
-				if (this.naGranicy(i, j)) {
-					p_tmp = this.pij(70, 180, psr);
-				} else {
-					p_tmp = this.pij(0, 30, psr);
-				}
-				p_all += p_tmp;
+				if (this.P[i][j].rek==0) {//p0  jesli ziarne zrekrystalizowalo nie przyjmuje juz dyslokacji
+					if (this.naGranicy(i, j)) {
+						p_tmp = this.pij(140, 190, psr);
+					} else {
+						p_tmp = this.pij(0, 30, psr);
+					}
+					p_all += p_tmp;
 				
-				this.P[i][j].p += p_tmp;
+					this.P[i][j].p += p_tmp;
+				}//p0
+				else ++zrekr_ile;
+				
+				p_real += this.P[i][j].p;
 				
 				if (this.P[i][j].rek==1) continue; // ziarno zrekrystalizowane
 				
@@ -189,10 +196,22 @@ public class Plansza extends JPanel implements Runnable {
 				}//nz
 			}//j
 		}//i
-		p_before += p_all; // jesli przydzielono za malo dyslokacji, dodaj brakujace do kolejnego kroku
+		double p_diff = (p-p_all)/((double)(this.tabSizeX*this.tabSizeY)-zrekr_ile); // roznica pomiedzy dyslokacjami rozdzielonymi a faktycznym stanem na planszy
+
+		p_real = 0.0;
+		for (int i = 0; i <= this.tabSizeX - 1; i++) {
+			for (int j = 0; j <= this.tabSizeY - 1; j++) {
+				if (this.P[i][j].rek==0)  this.P[i][j].p += p_diff;
+				p_real += this.P[i][j].p;
+			}//j
+		}//i
+		
+		//p_diff = this.gestosc_dyslokacji(itr)-p_real;
+		System.out.format("%f\n", p_real);
+		//System.out.println("p_real("+itr+") = "+p_diff);
 		//System.out.println("psr = "+psr+"; p_all="+p_all+" ("+p+"); p_krytyczne = "+p_krytyczne);
 		
-		/* rozrost istniejacych zrekrystalizowanych ziaren  */
+		/** rozrost istniejacych zrekrystalizowanych ziaren  */
 		for (int i = 0; i <= this.tabSizeX - 1; i++) {
 			for (int j = 0; j <= this.tabSizeY - 1; j++) {
 				if (this.P[i][j].act==0 || this.P[i][j].rek==1) continue; // brak ziarna lub komorka zrekrystalizowana
@@ -208,7 +227,7 @@ public class Plansza extends JPanel implements Runnable {
 		}//f[i
 	}//---------------------------
 	
-	/*
+	/**
 	 * rekrystalizacja w trakcie rozrostu ziaren - brak implementacji!
 	 */
 	private void iteracja_rekrystqalizacja() {
@@ -220,18 +239,18 @@ public class Plansza extends JPanel implements Runnable {
 				if (this.P[i][j].prev==0) {
 					this.P[i][j].p += this.pij(70, 120, psr);
 				} else if (this.P[i][j].prev==1) {
-					/*if (ziarno) {
+					/**if (ziarno) {
 						
 					} else {
 						this.P[i][j].p += this.pij(0, 30, psr);
 					}*/
-				} else { /* no to problem... */ }
+				} else { /** no to problem... */ }
 				
 			}//f[j
 		}//f[i
 	}//---------------------------
 	
-	/*
+	/**
 	 * wzor na gestosc dyslokacji
 	 */
 	private Double gestosc_dyslokacji(int itr) {
@@ -246,7 +265,7 @@ public class Plansza extends JPanel implements Runnable {
 		return r;
 	}
 	
-	/*
+	/**
 	 * losowanie wartosci sredniej gestosci dyslokacji w podanym zakresie procentowym
 	 */
 	private double pij(int l1, int l2, double psr) {
@@ -254,9 +273,9 @@ public class Plansza extends JPanel implements Runnable {
 		return (double)((r.nextInt(l2-l1)+l1)/100.0)*psr;
 	}
 	
-	/*rozrost naiwny*/
+	/**rozrost naiwny*/
 	
-	/*
+	/***
 	 * losowanie gestosci dysloacji i rozrost zrekrystalizowanych ziaren
 	 */
 	private int iteracja_naiwny() {
@@ -280,7 +299,7 @@ public class Plansza extends JPanel implements Runnable {
 		return x;
 	}//--
 
-	/*
+	/**
 	 * losuj zarodek w macierzy
 	 */
 	public void randomPixel() {
@@ -290,7 +309,7 @@ public class Plansza extends JPanel implements Runnable {
 		this.clickPixel(x, y);
 	}
 
-	/*
+	/**
 	 * wyczysc macierz
 	 */
 	public void clean() {
@@ -303,7 +322,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}
 
-	/*
+	/**
 	 * rozmieszczenie zarodkow na macierzy
 	 */
 	public void random() {
@@ -333,7 +352,8 @@ public class Plansza extends JPanel implements Runnable {
 					do {
 						this.P[t_x][t_y].set_random(1);
 					} while ( this.colorExists(this.P[t_x][t_y],t_x,t_y) );
-					
+
+					kolory.add(new P(this.P[t_x][t_y]));
 				}//j
 			}//i
 			
@@ -362,7 +382,8 @@ public class Plansza extends JPanel implements Runnable {
 				do {
 					this.P[x][y].set_random(1);
 				} while (this.colorExists(this.P[x][y],x,y));
-				
+
+				kolory.add(new P(this.P[x][y]));
 			}// for
 			break; // 2
 
@@ -372,6 +393,8 @@ public class Plansza extends JPanel implements Runnable {
 				y = r.nextInt(this.tabSizeY);
 				this.P[x][y].set_random(1);
 				while (this.colorExists(this.P[x][y],x,y)) this.P[x][y].set_random(1); // losuj nowe az do uzyskania unikatu
+
+				kolory.add(new P(this.P[x][y]));
 			}
 			break;// 3
 
@@ -391,6 +414,8 @@ public class Plansza extends JPanel implements Runnable {
 					this.P[p.x][p.y].set_random(1);
 				} while ( this.colorExists(this.P[p.x][p.y],p.x,p.y) );
 				
+				kolory.add(new P(this.P[p.x][p.y]));
+				
 				Iterator<Pkt> wsio_i = wsio.iterator();
 				while(wsio_i.hasNext()) {//next
 					Pkt v = wsio_i.next();
@@ -403,7 +428,6 @@ public class Plansza extends JPanel implements Runnable {
 		case 5: // monte carlo
 			Random rr = new Random();
 			// Core.Config.rozmieszczenie_r
-			kolory = new ArrayList<P>();
 			for (int i=0;i<Core.Config.punkty;i++) {
 				P pnew = new P(); pnew.set_random(0);
 				while (this.colorExists(pnew,-1,-1)) pnew.set_random(0); // losuj nowe az do uzyskania unikatu
@@ -420,7 +444,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}// --
 	
-	/*
+	/***
 	 * sprawdz czy dany kolor wystepuje juz na planszy
 	 * 
 	 * @param p punkt na planszy
@@ -459,7 +483,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}// g
 
-	/*
+	/**
 	 * wczytaj zapisana macierz punktow
 	 */
 	public void loadMap() {
@@ -469,7 +493,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}
 
-	/*
+	/**
 	 * exportuj tablice punktow
 	 */
 	public void saveMap() {
@@ -483,7 +507,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}
 
-	/*
+	/**
 	 * sprawdzaj czy rozmiar panszy (JPanel) sie zmienil i uaktualij rozmiar macierzy
 	 */
 	private void resizeP() {
@@ -533,7 +557,7 @@ public class Plansza extends JPanel implements Runnable {
 		}//[t]
 	}
 
-	/*
+	/**
 	 * sprawdz czy dana komorka moze zrekrystalizowac
 	 * - czy w jej otoczeniu (this->rekAbleR) jest juz zrekrystalizowany zarodek
 	 */
@@ -547,14 +571,14 @@ public class Plansza extends JPanel implements Runnable {
 		return true;
 	}//--
 
-	/*
+	/**
 	 * licz energię podczas rozrostu MC
 	 */
 	private int countEnergy(int x, int y) {
 		P[] s = new P[8];
 		int[] s_pattern = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-		/*
+		/**
 		 * 0 - lewa g�rna; 1 - centralna g�rna; 2 - prawa g�rna; 3 - prawa
 		 * �rodkowa 4 - prawa dolna; 5 - centralna dolna; 6 - lewa dolna; 7 -
 		 * lewa �rodkowa
@@ -616,7 +640,7 @@ public class Plansza extends JPanel implements Runnable {
 		return e;
 	}
 	
-	/*
+	/**
 	 * znajdz sasiada danego punktu
 	 * 
 	 * @param t - ziarno lub zrekrystalizowane ziarno
@@ -626,7 +650,7 @@ public class Plansza extends JPanel implements Runnable {
 		int[] s = { 0, 0, 0, 0, 0, 0, 0, 0 };
 		int[] s_pattern = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-		/*
+		/**
 		 * 0 - lewa g�rna; 1 - centralna g�rna; 2 - prawa g�rna; 3 - prawa
 		 * �rodkowa 4 - prawa dolna; 5 - centralna dolna; 6 - lewa dolna; 7 -
 		 * lewa �rodkowa
@@ -721,7 +745,7 @@ public class Plansza extends JPanel implements Runnable {
 
 	}
 
-	/*
+	/**
 	 * zapis obecnego stanu komorek jako poprzedni krok czasowy
 	 */
 	private void reverse() {
@@ -733,7 +757,7 @@ public class Plansza extends JPanel implements Runnable {
 		}
 	}
 
-	/*
+	/**
 	 * generuj nowy zarodek przez klikniecie myszka
 	 */
 	private void clickPixel(int x, int y) {
@@ -761,7 +785,7 @@ public class Plansza extends JPanel implements Runnable {
 		this.reverse();
 	}
 
-	/*
+	/**
 	 * czy dana komorka lezy na granicy swojego ziarna
 	 */
 	private boolean naGranicy(int x, int y) {
