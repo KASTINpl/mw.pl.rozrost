@@ -176,7 +176,7 @@ public class Plansza extends JPanel implements Runnable {
 				
 				if (this.P[i][j].rek==0) {//p0  jesli ziarne zrekrystalizowalo nie przyjmuje juz dyslokacji
 					if (this.naGranicy(i, j)) {
-						p_tmp = this.pij(140, 190, psr);
+						p_tmp = this.pij(70, 220, psr);
 					} else {
 						p_tmp = this.pij(0, 30, psr);
 					}
@@ -186,7 +186,7 @@ public class Plansza extends JPanel implements Runnable {
 				}//p0
 				else ++zrekr_ile;
 				
-				p_real += this.P[i][j].p;
+			//	p_real += this.P[i][j].p;
 				
 				if (this.P[i][j].rek==1) continue; // ziarno zrekrystalizowane
 				
@@ -196,7 +196,7 @@ public class Plansza extends JPanel implements Runnable {
 				}//nz
 			}//j
 		}//i
-		double p_diff = (p-p_all)/((double)(this.tabSizeX*this.tabSizeY)-zrekr_ile); // roznica pomiedzy dyslokacjami rozdzielonymi a faktycznym stanem na planszy
+		double p_diff = (p-p_all)/(double)( (this.tabSizeX*this.tabSizeY)-zrekr_ile ); // roznica pomiedzy dyslokacjami rozdzielonymi a faktycznym stanem na planszy
 
 		p_real = 0.0;
 		for (int i = 0; i <= this.tabSizeX - 1; i++) {
